@@ -1,10 +1,14 @@
 FROM centos:6.10
 
+#curl sets up the correct website for yum -y update
+RUN curl https://www.getpagespeed.com/files/centos6-eol.repo --output /etc/yum.repos.d/CentOS-Base.repo
+
 # Install packages
 RUN yum -y update && yum install -y wget gcc gcc-c++ readline-devel perl && yum clean all -y
 
 # Add epel repo
-RUN wget http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+# epel-release has been archived, new link
+RUN wget https://archives.fedoraproject.org/pub/archive/epel/6/x86_64/epel-release-6-8.noarch.rpm
 RUN rpm -ivh epel-release-6-8.noarch.rpm
 RUN rm -rf epel-release-6-8.noarch.rpm
 
