@@ -2,6 +2,7 @@
 
 temp_docker_file=Dockerfile_temp
 release_site_template=RELEASE_SITE.template
+git_repos=/afs/slac/g/cd/swe/git/repos/package/epics
 
 # $1 is the EPICS base version
 function base_version_in_files() {
@@ -16,7 +17,7 @@ function bring_epics_base() {
     # Remove last portion of the version number and replace with the string
     # 'branch'. We are cloning the branch HEAD instead of a tag.
     base_branch=${base_version%?}branch
-    git clone --branch $base_branch /afs/slac/g/cd/swe/git/repos/package/epics/base/base.git epics/base/$1
+    git clone --branch $base_branch $git_repos/base/base.git epics/base/$1
     base_version_in_files $1
 }
 
@@ -45,7 +46,7 @@ function add_module_to_dockerfile() {
 # $2 is the module version.
 function bring_module() {
     mkdir epics/modules/$1
-    git clone --branch $2 /afs/slac/g/cd/swe/git/repos/package/epics/modules/$1.git epics/modules/$1/$2
+    git clone --branch $2 $git_repos/modules/$1.git epics/modules/$1/$2
     add_module_to_dockerfile $1 $2
 }
 
@@ -72,6 +73,10 @@ function bring_epics() {
 	    bring_module ${tuplet[0]} ${tuplet[1]}
 	fi
     done < $filename
+}
+
+function bring_packages() {
+
 }
 
 cp -f Dockerfile_base $temp_docker_file
