@@ -1,0 +1,69 @@
+FROM centos:6.10
+
+#curl sets up the correct website for yum -y update
+RUN curl https://www.getpagespeed.com/files/centos6-eol.repo --output /etc/yum.repos.d/CentOS-Base.repo
+
+# Install packages
+RUN yum -y update && yum install -y wget gcc gcc-c++ readline-devel perl && yum clean all -y
+
+# Add epel repo
+# epel-release has been archived, new link
+RUN wget https://archives.fedoraproject.org/pub/archive/epel/6/x86_64/epel-release-6-8.noarch.rpm
+RUN rpm -ivh epel-release-6-8.noarch.rpm
+RUN rm -rf epel-release-6-8.noarch.rpm
+
+# Install extra packages from epel
+RUN yum install -y re2c && yum clean all -y
+
+# Define some common global env vars
+## EPICS base version
+ENV EPICS_BASE_VERSION *TAG_BASE_VERSION
+## Host architecture
+ENV EPICS_HOST_ARCH rhel6-x86_64
+## Top directory for all EPICS related packages
+ENV EPICS_SITE_TOP /usr/local/src/epics
+## Top directory for base
+ENV BASE_SITE_TOP ${EPICS_SITE_TOP}/base
+## Directory of the EPICS base version we are using
+ENV EPICS_BASE ${BASE_SITE_TOP}/${EPICS_BASE_VERSION}
+## Top directory for modules
+ENV EPICS_MODULES ${EPICS_SITE_TOP}/${EPICS_BASE_VERSION}/modules
+## Top directory for IOCs
+ENV IOC_SITE_TOP ${EPICS_SITE_TOP}/iocTop
+## Top directory for packages
+ENV PACKAGE_SITE_TOP /usr/local/src/packages
+## EPICS CONFIGURATIONS
+ENV EPICS_CA_REPEATER_PORT 5065
+ENV EPICS_CA_AUTO_ADDR_LIST YES
+ENV EPICS_CA_SERVER_PORT 5064
+ENV IOC_DATA /data/epics/ioc/data
+
+# Install packages
+# (I'm copying the ones from AFS for now instead of recompile...)
+WORKDIR ${PACKAGE_SITE_TOP}
+ADD epics/packages/boost/*.tar.gz             boost/
+ADD epics/packages/pcre/*.tar.gz              pcre
+ADD epics/packages/cpsw/framework/*.tar.gz    cpsw/framework/
+RUN cd cpsw/framework/ && ln -s R3.6.4 R3.6.3
+ADD epics/packages/timing/bsa/*.tar.gz        timing/bsa/
+ADD epics/packages/timing/tpg/*.tar.gz        timing/tpg/
+ADD epics/packages/yaml-cpp/*.tar.gz          yaml-cpp/
+
+
+# Install EPICS base
+RUN mkdir -p ${BASE_SITE_TOP}
+RUN mkdir -p ${IOC_DATA}
+WORKDIR ${BASE_SITE_TOP}
+
+COPY epics/base .
+WORKDIR ${EPICS_BASE_VERSION}
+# Build only for the host architecture
+RUN sed -i -e 's/^CROSS_COMPILER_TARGET_ARCHS=.*/CROSS_COMPILER_TARGET_ARCHS=/g' configure/CONFIG_SITE
+RUN make
+
+ENV PATH ${PATH}:${EPICS_BASE}/bin/${EPICS_HOST_ARCH}
+ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${EPICS_BASE}/lib/${EPICS_HOST_ARCH}
+
+# Install EPICS modules
+WORKDIR ${EPICS_MODULES}
+ADD epics/modules/RELEASE_SITE .
