@@ -115,4 +115,4 @@ docker run -ti --rm --name smurf-epics-slac jesusvasquez333/smurf-epics-slac:<VE
 ```
 
 Where:
-- **<VERSION>**: is the tagged version of the container your want to run.
+- **<VERSION>**: is the tagged version of the container your want to run. 
