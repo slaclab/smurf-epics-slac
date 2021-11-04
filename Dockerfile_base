@@ -41,13 +41,15 @@ ENV IOC_DATA /data/epics/ioc/data
 # Install packages
 # (I'm copying the ones from AFS for now instead of recompile...)
 WORKDIR ${PACKAGE_SITE_TOP}
-ADD epics/packages/boost/*.tar.gz             boost/
-ADD epics/packages/pcre/*.tar.gz              pcre
-ADD epics/packages/cpsw/framework/*.tar.gz    cpsw/framework/
-RUN cd cpsw/framework/ && ln -s R3.6.4 R3.6.3
-ADD epics/packages/timing/bsa/*.tar.gz        timing/bsa/
-ADD epics/packages/timing/tpg/*.tar.gz        timing/tpg/
-ADD epics/packages/yaml-cpp/*.tar.gz          yaml-cpp/
+*TAG_POSITION_FOR_PACKAGES
+
+#ADD epics/packages/boost/*.tar.gz             boost/
+#ADD epics/packages/pcre/*.tar.gz              pcre
+#ADD epics/packages/cpsw/framework/*.tar.gz    cpsw/framework/
+#RUN cd cpsw/framework/ && ln -s R3.6.4 R3.6.3
+#ADD epics/packages/timing/bsa/*.tar.gz        timing/bsa/
+#ADD epics/packages/timing/tpg/*.tar.gz        timing/tpg/
+#ADD epics/packages/yaml-cpp/*.tar.gz          yaml-cpp/
 
 
 # Install EPICS base
@@ -55,7 +57,7 @@ RUN mkdir -p ${BASE_SITE_TOP}
 RUN mkdir -p ${IOC_DATA}
 WORKDIR ${BASE_SITE_TOP}
 
-COPY epics/base .
+COPY temp_files/base .
 WORKDIR ${EPICS_BASE_VERSION}
 # Build only for the host architecture
 RUN sed -i -e 's/^CROSS_COMPILER_TARGET_ARCHS=.*/CROSS_COMPILER_TARGET_ARCHS=/g' configure/CONFIG_SITE
@@ -66,4 +68,4 @@ ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${EPICS_BASE}/lib/${EPICS_HOST_ARCH}
 
 # Install EPICS modules
 WORKDIR ${EPICS_MODULES}
-ADD epics/modules/RELEASE_SITE .
+ADD temp_files/modules/RELEASE_SITE .
