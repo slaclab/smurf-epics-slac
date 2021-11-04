@@ -1,19 +1,20 @@
 FROM centos:6.10
 
 #curl sets up the correct website for yum -y update
-RUN curl https://www.getpagespeed.com/files/centos6-eol.repo --output /etc/yum.repos.d/CentOS-Base.repo
+RUN curl https://www.getpagespeed.com/files/centos6-eol.repo --output /etc/yum.repos.d/CentOS-Base.repo; \
 
-# Install packages
-RUN yum -y update && yum install -y wget gcc gcc-c++ readline-devel perl && yum clean all -y
+    # Install packages
+    yum -y update && yum install -y wget gcc gcc-c++ readline-devel perl && yum clean all -y; \
 
-# Add epel repo
-# epel-release has been archived, new link
-RUN wget https://archives.fedoraproject.org/pub/archive/epel/6/x86_64/epel-release-6-8.noarch.rpm
-RUN rpm -ivh epel-release-6-8.noarch.rpm
-RUN rm -rf epel-release-6-8.noarch.rpm
+    # Add epel repo
+    # epel-release has been archived, new link
+    wget https://archives.fedoraproject.org/pub/archive/epel/6/x86_64/epel-release-6-8.noarch.rpm; \
+    rpm -ivh epel-release-6-8.noarch.rpm; \
+    rm -rf epel-release-6-8.noarch.rpm; \
 
-# Install extra packages from epel
-RUN yum install -y re2c && yum clean all -y
+    # Install extra packages from epel
+    # util-linux-ng is used by cexp
+    yum install -y re2c util-linux-ng && yum clean all -y
 
 # Define some common global env vars
 ## EPICS base version
@@ -41,27 +42,19 @@ ENV IOC_DATA /data/epics/ioc/data
 # Install packages
 # (I'm copying the ones from AFS for now instead of recompile...)
 WORKDIR ${PACKAGE_SITE_TOP}
-*TAG_POSITION_FOR_PACKAGES
-
-#ADD epics/packages/boost/*.tar.gz             boost/
-#ADD epics/packages/pcre/*.tar.gz              pcre
-#ADD epics/packages/cpsw/framework/*.tar.gz    cpsw/framework/
-#RUN cd cpsw/framework/ && ln -s R3.6.4 R3.6.3
-#ADD epics/packages/timing/bsa/*.tar.gz        timing/bsa/
-#ADD epics/packages/timing/tpg/*.tar.gz        timing/tpg/
-#ADD epics/packages/yaml-cpp/*.tar.gz          yaml-cpp/
-
+COPY temp_files/packages ./
 
 # Install EPICS base
-RUN mkdir -p ${BASE_SITE_TOP}
-RUN mkdir -p ${IOC_DATA}
+RUN mkdir -p ${BASE_SITE_TOP}; \
+    mkdir -p ${IOC_DATA}
 WORKDIR ${BASE_SITE_TOP}
 
 COPY temp_files/base .
 WORKDIR ${EPICS_BASE_VERSION}
 # Build only for the host architecture
-RUN sed -i -e 's/^CROSS_COMPILER_TARGET_ARCHS=.*/CROSS_COMPILER_TARGET_ARCHS=/g' configure/CONFIG_SITE
-RUN make
+RUN sed -i -e 's/^CROSS_COMPILER_TARGET_ARCHS=.*/CROSS_COMPILER_TARGET_ARCHS=/g' configure/CONFIG_SITE; \
+    sed -i -e 's/^CROSS_COMPILER_TARGET_ARCHS +=.*/CROSS_COMPILER_TARGET_ARCHS +=/g' configure/CONFIG_SITE; \
+    make
 
 ENV PATH ${PATH}:${EPICS_BASE}/bin/${EPICS_HOST_ARCH}
 ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:${EPICS_BASE}/lib/${EPICS_HOST_ARCH}

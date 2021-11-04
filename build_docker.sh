@@ -34,14 +34,13 @@ function add_module_to_dockerfile() {
     echo RUN mkdir -p $1/\${${1^^}_MODULE_VERSION} >> $temp_docker_file
     echo WORKDIR $1/\${${1^^}_MODULE_VERSION} >> $temp_docker_file
     echo COPY $temp_files_dir/modules/$1/\${${1^^}_MODULE_VERSION} . >> $temp_docker_file
-#    echo WORKDIR \${${1^^}_MODULE_VERSION} >> $temp_docker_file
     echo "#" Point to the re2c install in the system >> $temp_docker_file
-    echo RUN if [ -f configure/CONFIG_SITE ]";" then sed -i -e "'s|^RE2C =.*|RE2C = /usr/bin/re2c|g'" configure/CONFIG_SITE";" fi >> $temp_docker_file
+    echo RUN if [ -f configure/CONFIG_SITE ]";" then sed -i -e "'s|^RE2C =.*|RE2C = /usr/bin/re2c|g'" configure/CONFIG_SITE";" fi"; \\" >> $temp_docker_file
     echo "#" Remove cross compilation >> $temp_docker_file
-    echo RUN if [ -f configure/CONFIG_SITE.Common.rhel6-x86_64 ]";" then sed -i -e "'s|^PACKAGE_AREA=.*|PACKAGE_AREA=\${PACKAGE_SITE_TOP}|g'" configure/CONFIG_SITE.Common.rhel6-x86_64";" fi >> $temp_docker_file
-    echo RUN if [ -f configure/CONFIG_SITE ]";" then sed -i -e "'s|^CROSS_COMPILER_TARGET_ARCHS\s*=.*|CROSS_COMPILER_TARGET_ARCHS=|g'" configure/CONFIG_SITE";" fi >> $temp_docker_file
-    echo RUN rm -rf configure/CONFIG_SITE.Common.linuxRT-x86_64 >> $temp_docker_file
-    echo RUN make >> $temp_docker_file
+    echo "    "if [ -f configure/CONFIG_SITE.Common.rhel6-x86_64 ]";" then sed -i -e "'s|^PACKAGE_AREA=.*|PACKAGE_AREA=\${PACKAGE_SITE_TOP}|g'" configure/CONFIG_SITE.Common.rhel6-x86_64";" fi"; \\" >> $temp_docker_file
+    echo "    "if [ -f configure/CONFIG_SITE ]";" then sed -i -e "'s|^CROSS_COMPILER_TARGET_ARCHS\s*=.*|CROSS_COMPILER_TARGET_ARCHS=|g'" configure/CONFIG_SITE";" fi"; \\" >> $temp_docker_file
+    echo "    "rm -rf configure/CONFIG_SITE.Common.linuxRT-x86_64"; \\" >> $temp_docker_file
+    echo "    "make >> $temp_docker_file
 }
 
 # $1 is the module name.
@@ -77,50 +76,14 @@ function bring_epics() {
     done < $filename
 }
 
-# $1 is the package name and version.
-# $2 is the file line number where to add the info.
-function add_package_to_dockerfile() {
-    # Add text at the right position:
-    sed_command="$(echo $package_line"iCOPY "$temp_files_dir/packages/$1 $1)"
-    sed -i "$sed_command" $temp_docker_file
-}
-
 function bring_packages() {
-    #mkdir -p $temp_files_dir/packages
     filename='packages'
-
-    # Get the line with the text *TAG_POSITION_FOR_PACKAGES in Dockerfile_base.
-    # This is where we are going to create the commands to copy the packages
-    # inside the container.
-    package_line="$(grep -wn *TAG_POSITION_FOR_PACKAGES Dockerfile_base | cut -d: -f1)"
-
-    # Delete tag line
-    sed -i "$package_line""d" $temp_docker_file
 
     # Reading each line with package versions.
     while read line; do
-	# Read last string after space. It must be in the format
-	# <module name>/<version>
-        #version=${line##* }
-
-	# Separates the module name from the version in an array
-        #tuplet=(${version//// })
-
-	#if [ ${tuplet[0]} == 'base' ]; then
-        #    base_version=${tuplet[1]}
-
-            # Bring EPICS base from AFS Git
-	#    bring_epics_base $base_version
-	#else
-	    # Bring the module from AFS Git
-	#    bring_module ${tuplet[0]} ${tuplet[1]}
-	#fi
-
 	echo Copying $line
 	mkdir -p $temp_files_dir/packages/$line
 	cp -Rn $package_area/$line/rhel6-x86_64 $temp_files_dir/packages/$line
-
-	add_package_to_dockerfile $line $package_line
     done < $filename
 }
 
