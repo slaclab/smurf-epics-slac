@@ -1,0 +1,9 @@
+boost/1.64.0
+cpsw/deviceLibrary/R1.2.0
+cpsw/framework/R4.4.1
+cpsw/yamlReader/R1.2.0
+timing/bsa/R1.2.0
+timing/hpsTpr/R1.1.0
+atca/commonATCA/R1.3.0
+yaml-cpp/yaml-cpp-0.5.3_boost-1.64.0
+cexp/2.3.1
