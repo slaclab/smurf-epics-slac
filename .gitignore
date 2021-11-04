@@ -3,3 +3,5 @@ epics/
 Dockerfile
 Dockerfile_temp
 *.swp
+backup/
+temp_files/
