@@ -1,0 +1,15 @@
+  epics/iocTop/Tpg/R1.7.3-1.3.0                       base/R3.15.5-1.1
+                                   seq                 seq/R2.2.4-1.0
+                                   seq                 seq/R2.2.4-1.1
+                                  asyn                asyn/R4.31-0.1.0
+                              autosave            autosave/R5.8-1.0.0
+                              autosave            autosave/R5.7.1-3.2.0
+                              caPutLog            caPutLog/R3.5-0.1.0
+                              iocAdmin            iocAdmin/R3.1.15-1.0.0
+                              iocAdmin            iocAdmin/R3.1.15-1.1.0
+                                  calc                calc/R3.6.1-0.1.0
+                                 sscan               sscan/R2.10.2-0.1.0
+                             miscUtils           miscUtils/R2.2.5
+                            yamlLoader          yamlLoader/R1.1.0
+                             bsaDriver           bsaDriver/R1.5.0
+                       crossbarControl     crossbarControl/R1.0.4
