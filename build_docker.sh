@@ -1,10 +1,102 @@
 #!/usr/bin/env bash
 
+show_usage() {
+    echo ""
+    echo "Usage: $0 [-hcu] image_name"
+    echo ""
+    echo "Builds a CentOS 6 Docker image named as image_name containing EPICS"
+    echo "base and modules listed in a required 'epics-modules' file and also"
+    echo "packages listed in a required 'packages' file."
+    echo ""
+    echo "The image name can be any valid Docker image tag. Examples: my_image,"
+    echo "or my_organization/my_image, or my_organization/my_image:version."
+    echo ""
+    echo "Optional arguments:"
+    echo "  -h, --help                  Show this help message and exit"
+    echo "  -c, --clean                 Remove all modules, base, and package files inside the temp_files directory as well as the Dockerfile_temp file"
+    echo "  -u, --uninstall             Delete the Dockerfile file and the generated Docker image."
+    echo ""
+    exit
+}
+
+function clean_files() {
+    rm -rf temp_files
+    rm -f Dockerfile_temp
+}
+
+function uninstall() {
+    rm -f Dockerfile
+    docker rmi "$1"
+}
+
 temp_docker_file=Dockerfile_temp
 release_site_template=RELEASE_SITE.template
 temp_files_dir=temp_files
 git_repos=/afs/slac/g/cd/swe/git/repos/package/epics
 package_area=/afs/slac/g/lcls/package
+uninstall=0
+clean=0
+docker_image_name=""
+
+if [ $# -eq 0 ]; then
+    echo "The name of the Docker image must be provided."
+    show_usage
+fi
+
+while [ -n "$1" ]; do
+    case "$1" in
+        -h | --help)
+            # Show this help message and exit
+            show_usage
+            exit
+            ;;
+        -c | --clean)
+            # Remove temporary files
+	    clean=1
+            ;;
+        -u | --uninstall)
+	    # Delete Dockerfile and Docker image
+	    uninstall=1
+            ;;
+        *)
+            # Extra argument should be the Docker image name
+	    if [ -z "$docker_image_name" ]; then
+                docker_image_name=$1
+	    else
+		# If image name was provided before, what is this extra argument?
+                echo "Invalid argument $1"
+		show_usage
+		exit
+	    fi
+    esac
+    shift
+done
+
+# User wants only to clean, so we don't need the image name
+if [ $clean -eq 1 -a $uninstall -eq 0 ]; then
+    clean_files
+    exit
+fi
+
+# For all other cases, image name is required
+if [ -z "$docker_image_name" ]; then
+    echo "The name of the Docker image must be provided."
+    show_usage
+    exit
+fi
+
+if [ $clean -eq 1 ]; then
+    clean_files
+fi
+
+if [ $uninstall -eq 1 ]; then
+    uninstall $docker_image_name
+fi
+
+# Exit if using clean or uninstall
+if [ $clean -eq 1 -o $uninstall -eq 1 ]; then
+    exit
+fi
 
 # $1 is the EPICS base version
 function base_version_in_files() {
@@ -91,15 +183,4 @@ cp -f Dockerfile_base $temp_docker_file
 bring_packages
 bring_epics
 cp -f $temp_docker_file Dockerfile
-
-# Definitions
-#repo=smurf-epics-slac
-#org=jesusvasquez333
-
-# Use the git tag to tag the docker image
-#tag=$(git describe --tags --always)
-
-# Build the docker and tagged it with the application version
-#docker build -t ${org}/${repo} .
-#docker tag ${org}/${repo} ${org}/${repo}:${tag}
-#printf "Docker image created: ${org}/${repo}:${tag}\n"
+docker build -t $docker_image_name .
