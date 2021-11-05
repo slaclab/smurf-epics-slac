@@ -46,6 +46,8 @@ Suppose that you have your IOC application in the directory /home/myname/my_ioc_
 docker run -ti --rm --name my_container --network=host --mount type=bind,source=/home/myname/my_ioc_application,target=/usr/local/src/epics/iocTop/ <image_name> bash
 ```
 
+You will have to decide whether you want the $IOC_DATA area bound or not. If you want to persist this information and have it outside the container, you have to add a new bind to the command above. Otherwise, just define an arbitrary location for $IOC_DATA.
+
 To access PVs from outside the host (example lcls-dev3), define EPICS_CA_ADDR_LIST to the host IP, not the broadcast to the host network. Host here is the machine running the Docker container.
 
 For using the image as a base to build another one, start the new docker image Dockerfile with this line:
