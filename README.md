@@ -1,117 +1,57 @@
-# SLAC's EPICS building environment Docker image for the SMuRF project
+# SLAC's EPICS building environment Docker image
 
 ## Description
 
-This docker image, named **smurf-epics-slac** contains the SLAC's EPICS environment needed to build EPICS IOCs used in the SMuRF project.
+This is a Docker image builder. The final result of the script build_docker.sh is an image containing the SLAC's EPICS environment needed to build EPICS IOCs in RHEL6 or CentOS 6, including EPICS base, modules, packages, and environment variables. The builder can work with only one EPICS base version of choice, but it can contain multiple versions of the same module and package.
 
-It is based on centos 6.10 to match closely the development environment at SLAC, and contains:
-- EPICS base, version R3.15.5-1.0
-- EPICS modules:
-  - asyn, version R4.31-0.1.0
-  - autosave, versions R5.7.1-3.2.0 and R5.8-1.0.0
-  - bsaDriver, versions R1.0.4 and R1.5.0
-  - caPutLog, version R3.5-0.1.0
-  - calc, version R3.6.1-0.1.0
-  - crossbarControl, version R1.0.4
-  - iocAdmin, versions R3.1.15-1.0.0 and R3.1.15-1.1.0
-  - miscUtils, version R2.2.5
-  - normativeTypesCPP, version R5.2.0-0.0.1
-  - pvAccessCPP, version R6.0.0-0.3.0
-  - pvDataCPP, version R7.0.0-0.0.1
-  - pvDatabaseCPP, version R4.3.0-0.0.3
-  - pva2pva, version R1.0.0-0.3.1
-  - seq, versions R2.2.4-1.0 and R2.2.4-1.1
-  - sscan, version R2.10.2-0.1.0
-  - yamlLoader, version R1.1.0
-- Packages:
-  - boost, version 1.63.0
-  - cpsw framework, version R3.6.4 and R3.6.3
-  - pcre, version 8.37
-  - timing bsa, versions R1.1.0 and R1.1.1
-  - timinig tpg, version R1.3.2
-  - yaml-cpp, version 0.5.3
+You must run build_docker.sh in a machine with Docker installed and with SLAC's AFS mounted. The script brings base, modules, and packages from the AFS and, so, it depends on it.
 
-## Source code
+Two files must be provided as inputs for the script:
+- packages: list of packages containing the path, package name, and version. The list items can take any order. You can check configure/CONFIG_SITE of the IOC application that you want to build inside the container to get the list elements. Examples:
+  - boost/1.63.0
+  - cpsw/framework/R3.6.3
+- epics-modules: contains the EPICS base version on the first line and the modules slash version on the next lines. The easiest way of obtaining this list is going to the top directory of the IOC that you want to build inside the container and using the eco tools command epics-versions. The formatted output by epics-versions is compatible with what build_docker.sh is expecting. Make sure that you have the environment set to use eco tools. epics-versions print the modules in alphabetic order, so a manual tweak is needed. You must order the list in dependency order. The modules will be built in the same order as this list and so, if a module depends on another, it expects that the other module is already available. Example:
+   -   epics/iocTop/gmd/R2.1.0             base/R7.0.3.1-1.0
+   -   seq                 seq/R2.2.4-1.2
+   -   asyn                asyn/R4.32-1.0.0
+   -   autosave            autosave/R5.8-2.1.0
 
-The source code was manually checkout from SLAC's git repositories hosted in an AFS-based internal git repositories. Each individual packages was compress into a **tar.gz** file and placed alongside the Dockerfile in the following directory tree:
+This repository provides two examples of epics-modules/packages pair of files. One with EPICS 3.15 for IOCs used in SMuRF and another for EPICS 7 with a much more complex scenario, containing 21 modules. The latter is based on support for the IOC application used with the ATCA-based common platform.
 
-```
-── epics/
-│   ├── base/
-│   │   └── R3.15.5-1.0.tar.gz
-│   └── modules/
-│       ├── asyn/
-│       │   └── R4.31-0.1.0.tar.gz
-│       ├── autosave/
-│       │   ├── R5.7.1-3.2.0.tar.gz
-│       │   └── R5.8-1.0.0.tar.gz
-│       ├── bsaDriver/
-│       │   ├── R1.0.4.tar.gz
-│       │   └── R1.5.0.tar.gz
-│       ├── caPutLog/
-│       │   └── R3.5-0.1.0.tar.gz
-│       ├── calc/
-│       │   └── R3.6.1-0.1.0.tar.gz
-│       ├── crossbarControl/
-│       │   └── R1.0.4.tar.gz
-│       ├── iocAdmin/
-│       │   ├── R3.1.15-1.0.0.tar.gz
-│       │   └── R3.1.15-1.1.0.tar.gz
-│       ├── miscUtils/
-│       │   └── R2.2.5.tar.gz
-│       ├── normativeTypesCPP/
-│       │   └── R5.2.0-0.0.1.tar.gz
-│       ├── pvAccessCPP/
-│       │   └── R6.0.0-0.3.0.tar.gz
-│       ├── pvDataCPP/
-│       │   └── R7.0.0-0.0.1.tar.gz
-│       ├── pvDatabaseCPP/
-│       │   └── R4.3.0-0.0.3.tar.gz
-│       ├── pva2pva/
-│       │   └── R1.0.0-0.3.1.tar.gz
-│       ├── seq/
-│       │   ├── R2.2.4-1.0.tar.gz
-│       │   └── R2.2.4-1.1.tar.gz
-│       ├── sscan/
-│       │   └── R2.10.2-0.1.0.tar.gz
-│       ├── yamlLoader/
-│       │   └── R1.1.0.tar.gz
-├── packages/
-│   ├── boost/
-│   │   └── 1.63.0.tar.gz
-│   ├── cpsw/
-│   │   └── framework/
-│   │       └── R3.6.4.tar.gz
-│   ├── pcre/
-│   │   └── 8.37.tar.gz
-│   ├── timing/
-│   │   ├── bsa/
-│   │   │   ├── R1.1.0.tar.gz
-│   │   │   └── R1.1.1.tar.gz
-│   │   └── tpg/
-│   │       └── R1.3.2.tar.gz
-│   └── yaml-cpp/
-│       └── yaml-cpp-0.5.3.tar.gz
-```
-
-In each directory, the corresponding package version is place compressed in a file named `<VERSION>.tar.gz`
+You can use both example files to check one possible dependency order for the modules to build correctly.
 
 ## Building the image
 
-The provided script *build_docker.sh* will automatically build the docker image. It will tag the resulting image using the same git tag string (as returned by `git describe --tags --always`).
+The provided script *build_docker.sh* will automatically build the docker image, provided that the files epics-modules and packages are available. Notice that no Dockerfile is provided by this repository as it will be created automatically. The script needs a name for the image. This name will be referred to as <image_name> in the remainder of this document.
+
+The script copies the already built packages from AFS to a temp_files directory. It also clones the GIT repositories available in AFS to specific versions of the modules and base. The clones are placed in temp_files, too. Docker has a security feature that forbids it to read files in directories above the current one. Neither symbolic links are accepted. So, we need to copy locally everything that we want to place inside the container.
+
+With the files available locally and the Dockerfile generated, the image will be built by copying the packages inside the container, building the EPICS base, and building all the modules.
+
+After the completion, you have a ready-to-use CentOS 6 container to build and test your IOC application.
+
+## Exporting to Docker Hub
+(Text under construction)
+It will tag the resulting image using the same git tag string (as returned by `git describe --tags --always`).
 
 ## Using this image
 
-This image is intended to be used as a base to build other docker image. In order to do so, start the new docker image Dockerfile with this line:
+The generated image is intended to be used as a test container for IOC applications or as a base to build another docker image. 
+
+A suggested approach to work with an IOC application is to have it in a directory outside the container. The container would have a bound directory to access the IOC application. You could edit files directly from the host computer or from inside the container, but you would have to run *make* from inside the container. Remember that everything that changed inside the container, except for the binded directories will be lost once you exit it. So, only change what you want to be persisted in a bound directory.
+
+Suppose that you have your IOC application in the directory /home/myname/my_ioc_application outside the container. You want it to bind to the directory /usr/local/src/epics/iocTop/. This is the command that you would use to access the container and work with your IOC application:
 
 ```
-ROM jesusvasquez333/smurf-epics-slac:<VERSION>
+docker run -ti --rm --name my_container --network=host -p 5064:5064 -p 5065:5065 -p 5064:5064/udp -p 5065:5065/udp --mount type=bind,source=/home/myname/my_ioc_application,target=/usr/local/src/epics/iocTop/ <image_name> bash
 ```
 
-A container however can be run as well from this image. For example, you can start the container in the foreground with this command
+Notice that we are opening the standard UDP and TCP EPICS ports - 5064 and 5065 - as you can use caget/caput and screens outside the container. 
+
+For using the image as a base to build another one, start the new docker image Dockerfile with this line:
 
 ```
-docker run -ti --rm --name smurf-epics-slac jesusvasquez333/smurf-epics-slac:<VERSION>
+ROM <docker_hub_image>:<VERSION>
 ```
 
 Where:
