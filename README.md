@@ -22,7 +22,9 @@ You can use both example files to check one possible dependency order for the mo
 
 ## Building the image
 
-The provided script *build_docker.sh* will automatically build the docker image, provided that the files epics-modules and packages are available. Notice that no Dockerfile is provided by this repository as it will be created automatically. The script needs a name for the image. This name will be referred to as <image_name> in the remainder of this document.
+The provided script *build_docker.sh* will automatically build the docker image, provided that the files epics-modules and packages are available. Notice that no Dockerfile is provided by this repository as it will be created automatically.
+
+The script needs a name for the image. This name will be referred to as <image_name> in the remainder of this document. The image name can be any valid Docker image tag. Examples: my_image, or my_organization/my_image, or my_organization/my_image:version.
 
 The script copies the already built packages from AFS to a temp_files directory. It also clones the GIT repositories available in AFS to specific versions of the modules and base. The clones are placed in temp_files, too. Docker has a security feature that forbids it to read files in directories above the current one. Neither symbolic links are accepted. So, we need to copy locally everything that we want to place inside the container.
 
@@ -30,9 +32,10 @@ With the files available locally and the Dockerfile generated, the image will be
 
 After the completion, you have a ready-to-use CentOS 6 container to build and test your IOC application.
 
-## Exporting to Docker Hub
-(Text under construction)
-It will tag the resulting image using the same git tag string (as returned by `git describe --tags --always`).
+## Cleaning and uninstalling
+You can use two optional arguments to clean your intermediary and final products:
+- -c or --clean: delete all modules, packages, EPICS base that were copied from AFS. It also deletes the file Dockerfile_temp.
+- -u or --uninstall: delete Dockerfile and the Docker image.
 
 ## Using this image
 
@@ -57,4 +60,4 @@ ROM <docker_hub_image>:<VERSION>
 ```
 
 Where:
-- **<VERSION>**: is the tagged version of the container your want to run. 
+- **<VERSION>**: is the tagged version of the container you want to run. 
