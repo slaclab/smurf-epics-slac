@@ -43,10 +43,10 @@ A suggested approach to work with an IOC application is to have it in a director
 Suppose that you have your IOC application in the directory /home/myname/my_ioc_application outside the container. You want it to bind to the directory /usr/local/src/epics/iocTop/. This is the command that you would use to access the container and work with your IOC application:
 
 ```
-docker run -ti --rm --name my_container --network=host -p 5064:5064 -p 5065:5065 -p 5064:5064/udp -p 5065:5065/udp --mount type=bind,source=/home/myname/my_ioc_application,target=/usr/local/src/epics/iocTop/ <image_name> bash
+docker run -ti --rm --name my_container --network=host --mount type=bind,source=/home/myname/my_ioc_application,target=/usr/local/src/epics/iocTop/ <image_name> bash
 ```
 
-Notice that we are opening the standard UDP and TCP EPICS ports - 5064 and 5065 - as you can use caget/caput and screens outside the container. 
+To access PVs from outside the host (example lcls-dev3), define EPICS_CA_ADDR_LIST to the host IP, not the broadcast to the host network. Host here is the machine running the Docker container.
 
 For using the image as a base to build another one, start the new docker image Dockerfile with this line:
 
