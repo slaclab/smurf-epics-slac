@@ -1,4 +1,4 @@
-# SLAC's EPICS building environment Docker image
+# SLAC's EPICS building RHEL6/CentOS 6 environment Docker image
 
 ## Description
 
