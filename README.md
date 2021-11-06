@@ -60,4 +60,4 @@ ROM <docker_hub_image>:<VERSION>
 ```
 
 Where:
-- **<VERSION>**: is the tagged version of the container you want to run. 
+- **\<VERSION\>**: is the tagged version of the container you want to run. 
